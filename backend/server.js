@@ -1,0 +1,234 @@
+/**
+ * server.js
+ * ──────────
+ * Express backend for the terminal portfolio.
+ *
+ * Endpoints:
+ *   POST /ask   – proxy AI questions to OpenAI with a structured system prompt
+ *   GET  /health – liveness check
+ *
+ * Security:
+ *   • API key never leaves the server
+ *   • Request body validated before touching OpenAI
+ *   • Simple in-memory rate limiter (no Redis required for self-hosting)
+ *   • CORS locked to same origin in production
+ */
+
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import OpenAI from "openai";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
+// ── Load environment variables ────────────────────────────────────────────────
+dotenv.config();
+
+const PORT        = parseInt(process.env.PORT || "3000", 10);
+const NODE_ENV    = process.env.NODE_ENV || "development";
+const OPENAI_KEY  = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*"; // lock this in prod
+
+if (!OPENAI_KEY) {
+  console.error("❌  OPENAI_API_KEY is not set. Check your .env file.");
+  process.exit(1);
+}
+
+// ── OpenAI client ─────────────────────────────────────────────────────────────
+const openai = new OpenAI({ apiKey: OPENAI_KEY });
+
+// ── Express app ───────────────────────────────────────────────────────────────
+const app = express();
+
+// Serve the frontend from the `../frontend` directory
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+app.use(express.json({ limit: "32kb" }));  // keep payloads small
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+app.use(cors({
+  origin: NODE_ENV === "production" ? ALLOWED_ORIGIN : "*",
+  methods: ["GET", "POST"],
+}));
+
+// ── Simple in-memory rate limiter ─────────────────────────────────────────────
+// Maps IP → { count, resetAt }
+// Allows up to MAX_REQUESTS per WINDOW_MS per IP.
+const RATE_WINDOW_MS  = 60_000;  // 1 minute
+const MAX_REQUESTS    = 20;
+const rateLimitStore  = new Map();
+
+function rateLimiter(req, res, next) {
+  const ip  = req.ip || req.connection.remoteAddress || "unknown";
+  const now = Date.now();
+
+  let entry = rateLimitStore.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + RATE_WINDOW_MS };
+    rateLimitStore.set(ip, entry);
+  }
+
+  entry.count += 1;
+
+  res.setHeader("X-RateLimit-Limit",     MAX_REQUESTS);
+  res.setHeader("X-RateLimit-Remaining", Math.max(0, MAX_REQUESTS - entry.count));
+
+  if (entry.count > MAX_REQUESTS) {
+    return res.status(429).json({
+      error: "Too many requests. Please wait a minute before asking again.",
+    });
+  }
+
+  // Clean up old entries every 100 requests (prevents unbounded growth)
+  if (rateLimitStore.size > 1000) {
+    for (const [key, val] of rateLimitStore) {
+      if (now > val.resetAt) rateLimitStore.delete(key);
+    }
+  }
+
+  next();
+}
+
+// ── Input validation ──────────────────────────────────────────────────────────
+function validateAskBody(req, res, next) {
+  const { question, portfolioData } = req.body;
+
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "Missing or invalid `question` field." });
+  }
+
+  if (question.length > 500) {
+    return res.status(400).json({ error: "Question is too long (max 500 chars)." });
+  }
+
+  if (!portfolioData || typeof portfolioData !== "object") {
+    return res.status(400).json({ error: "Missing or invalid `portfolioData` field." });
+  }
+
+  next();
+}
+
+// ── System prompt builder ─────────────────────────────────────────────────────
+/**
+ * Constructs a tight system prompt that:
+ *  1. Gives the AI a persona
+ *  2. Supplies all portfolio data as ground truth
+ *  3. Prevents hallucination and off-topic answers
+ *  4. Keeps answers short and professional
+ */
+function buildSystemPrompt(portfolioData) {
+  const p = portfolioData;
+
+  return `You are the AI persona of ${p.name}, a ${p.role} who also takes on freelance and client work.
+
+Your audience is MIXED — some visitors are developers, but many are non-technical business owners
+(e.g. someone who wants a webshop, a landing page, or a custom app).
+
+Rules:
+1. Answer ONLY from the data provided below. Do not invent prices, timelines, or capabilities.
+2. For non-technical questions (pricing, timelines, "can you build X"), refer to the services and faq sections.
+3. Keep answers to 4 sentences or fewer. Be warm, clear, and jargon-free with non-technical visitors.
+4. Write in first person as ${p.name}.
+5. If a question cannot be answered from this data, say: "I don't have that detail here — send me an email and I'll answer properly."
+6. Always end answers about services or availability with the contact email if it feels natural.
+7. Refuse to answer questions completely unrelated to ${p.name}'s professional background.
+
+=== PORTFOLIO DATA ===
+${JSON.stringify(portfolioData, null, 2)}
+=== END DATA ===`;
+}
+
+// ── POST /ask ─────────────────────────────────────────────────────────────────
+app.post("/ask", rateLimiter, validateAskBody, async (req, res) => {
+  const { question, portfolioData, history = [] } = req.body;
+
+  // Build message history (last N turns from client)
+  const safeHistory = Array.isArray(history)
+    ? history
+        .slice(-10)  // accept at most 10 historical messages
+        .filter(m => m.role && typeof m.content === "string")
+        .map(m => ({ role: m.role, content: m.content.slice(0, 1000) }))  // cap each
+    : [];
+
+  const messages = [
+    ...safeHistory,
+    { role: "user", content: question },
+  ];
+
+  try {
+    // ── Streaming response ──────────────────────────────────────────────
+    const stream = await openai.chat.completions.create({
+      model:       process.env.OPENAI_MODEL || "gpt-4o-mini",
+      max_tokens:  300,
+      temperature: 0.4,   // low = more factual, less creative
+      stream:      true,
+      system:      buildSystemPrompt(portfolioData),
+      messages,
+    });
+
+    // Set SSE headers
+    res.setHeader("Content-Type",  "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection",    "keep-alive");
+    res.flushHeaders();
+
+    for await (const chunk of stream) {
+      const token = chunk.choices[0]?.delta?.content || "";
+      if (token) {
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      }
+    }
+
+    res.write("data: [DONE]\n\n");
+    res.end();
+
+  } catch (err) {
+    console.error("[/ask] OpenAI error:", err.message);
+
+    // If headers already sent (streaming started), just close
+    if (res.headersSent) {
+      res.end();
+      return;
+    }
+
+    if (err.status === 401) {
+      return res.status(500).json({ error: "OpenAI authentication failed. Check your API key." });
+    }
+    if (err.status === 429) {
+      return res.status(429).json({ error: "OpenAI rate limit hit. Try again in a moment." });
+    }
+
+    res.status(500).json({ error: "An error occurred processing your request." });
+  }
+});
+
+// ── GET /health ───────────────────────────────────────────────────────────────
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", env: NODE_ENV, ts: new Date().toISOString() });
+});
+
+// ── Catch-all: serve index.html for SPA routing ───────────────────────────────
+app.get(/.*/, (_req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
+// ── Global error handler ──────────────────────────────────────────────────────
+app.use((err, _req, res, _next) => {
+  console.error("[global]", err.message);
+  res.status(500).json({ error: "Internal server error." });
+});
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n  ╔══════════════════════════════════════╗`);
+  console.log(`  ║  Terminal Portfolio Backend           ║`);
+  console.log(`  ║  http://localhost:${PORT}                ║`);
+  console.log(`  ║  ENV: ${NODE_ENV.padEnd(28)}  ║`);
+  console.log(`  ╚══════════════════════════════════════╝\n`);
+});
+
+export default app; // for testing
