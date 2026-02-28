@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Software Developer -UAE · Portfolio</title>
+  <meta name="description" content="Senior Full-Stack Engineer — interactive terminal portfolio." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/terminal.css" />
+</head>
+<body>
+
+  <div id="page-shell">
+
+    <!-- ── Welcome banner ─────────────────────────────────────────── -->
+    <div id="welcome-banner" role="complementary" aria-label="Site intro for new visitors">
+      <div id="welcome-inner">
+        <div id="welcome-avatar" aria-hidden="true">MM</div>
+        <div id="welcome-text">
+          <p id="welcome-heading">Hey, I'm Marvin 👋</p>
+          <p id="welcome-sub">I build websites, web shops &amp; Mobile + Web apps.<br>This page is interactive — <strong>you can ask me anything below.</strong></p>
+        </div>
+        <button id="welcome-dismiss" aria-label="Dismiss intro tip">Got it ✕</button>
+      </div>
+    </div>
+
+    <div id="terminal">
+
+      <!-- ── Title bar ─────────────────────────────────────────────── -->
+      <div id="titlebar" aria-hidden="true">
+        <span class="tb-dot red"></span>
+        <span class="tb-dot amber"></span>
+        <span class="tb-dot green"></span>
+        <span id="titlebar-text">marv@portfolio: ~</span>
+        <!-- Skip intro for impatient visitors -->
+        <button id="skip-intro-btn" aria-label="Skip the typing animation">Skip intro ↓</button>
+      </div>
+
+      <!-- ── Output area ───────────────────────────────────────────── -->
+      <div
+        id="terminal-output"
+        role="log"
+        aria-live="polite"
+        aria-label="Terminal output"
+      ></div>
+
+      <!-- ── Input line ────────────────────────────────────────────── -->
+      <div id="input-line" class="hidden" aria-label="Command input">
+        <span id="input-prefix" aria-hidden="true">$ </span>
+        <div id="input-display" aria-hidden="true">
+          <span id="input-prompt"></span>
+          <span id="cursor" aria-hidden="true"></span>
+        </div>
+        <input
+          id="terminal-input"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          aria-label="Type a command or ask a question"
+        />
+      </div>
+
+    </div><!-- /#terminal -->
+
+    <!--
+      ╔════════════════════════════════════════════════════════════════════╗
+      ║  LAYMAN ACTION PANEL                                               ║
+      ║  Appears after the intro animation finishes.                       ║
+      ║  Lets non-technical visitors click instead of type.               ║
+      ╚════════════════════════════════════════════════════════════════════╝
+    -->
+    <aside id="action-panel" class="panel-hidden" aria-label="Quick navigation">
+
+      <!-- ── Quick nav buttons ──────────────────────────────────────── -->
+      <section class="panel-section" id="panel-nav">
+        <h2 class="panel-label">Browse</h2>
+        <div class="btn-grid">
+          <button class="nav-btn" data-cmd="about">👤 About me</button>
+          <button class="nav-btn" data-cmd="skills">🛠 Skills</button>
+          <button class="nav-btn" data-cmd="experience">💼 Experience</button>
+          <button class="nav-btn" data-cmd="projects">🚀 Projects</button>
+          <button class="nav-btn" data-cmd="contact">📬 Contact</button>
+        </div>
+      </section>
+
+      <!-- ── Suggested AI questions ─────────────────────────────────── -->
+      <section class="panel-section" id="panel-questions">
+        <h2 class="panel-label">Ask a question</h2>
+        <div class="suggestions">
+          <button class="suggestion-btn" data-question="Can you build a webshop for me?">Can you build a webshop for me?</button>
+          <button class="suggestion-btn" data-question="How much does a website cost?">How much does a website cost?</button>
+          <button class="suggestion-btn" data-question="What kind of projects have you done before?">What projects have you done?</button>
+          <button class="suggestion-btn" data-question="Are you available right now?">Are you available right now?</button>
+          <button class="suggestion-btn" data-question="How long does it take to build a website?">How long does it take?</button>
+          <button class="suggestion-btn" data-question="What technologies do you use to build websites?">What tech do you use?</button>
+        </div>
+      </section>
+
+      <!-- ── Primary CTA ────────────────────────────────────────────── -->
+      <section class="panel-section" id="panel-cta">
+        <a id="cta-email" href="/cdn-cgi/l/email-protection#31505d544971505d54494358475443501f555447" class="cta-button">
+          ✉️ &nbsp;Email me — let's talk
+        </a>
+        <p class="cta-sub">Usually replies within a few hours</p>
+      </section>
+
+    </aside><!-- /#action-panel -->
+
+  </div><!-- /#page-shell -->
+
+  <!-- Scripts — order matters -->
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script src="js/portfolio-data.js"></script>
+  <script src="js/typing-engine.js"></script>
+  <script src="js/command-parser.js"></script>
+  <script src="js/ai-handler.js"></script>
+  <script src="js/terminal.js"></script>
+</body>
+</html>
