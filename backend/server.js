@@ -45,6 +45,7 @@ const app = express();
 
 // Serve the frontend from the `../frontend` directory
 app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(express.static(path.join(__dirname, "../frontend/public")));
 
 app.use(express.json({ limit: "32kb" }));  // keep payloads small
 
