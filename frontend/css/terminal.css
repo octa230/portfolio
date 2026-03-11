@@ -73,6 +73,14 @@ html, body {
   overflow: hidden;
 }
 
+/* Mobile: allow full page scroll */
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto;
+    height: auto;
+  }
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-size);
@@ -293,7 +301,7 @@ button, a { cursor: pointer; }
 
 /* ── SEO content block — visible to crawlers, invisible to users ────────── */
 #seo-content {
-  display: none;
+  display: none !important;
 }
 
 /* ── Print / no-animation preference ───────────────────────────────────────── */
@@ -314,6 +322,14 @@ button, a { cursor: pointer; }
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  #page-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
 }
 
 /* Terminal now fills remaining space above the panel */
