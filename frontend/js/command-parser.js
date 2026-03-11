@@ -52,12 +52,13 @@ const CommandParser = (() => {
       return [
         { html: '<span class="accent">Technical Skills</span>' },
         { blank: true },
-        row("Languages",  s.languages),
-        row("Frontend",   s.frontend),
-        row("Backend",    s.backend),
-        row("Databases",  s.databases),
+        row("Languages",   s.languages),
+        row("Mobile",      s.mobile),
+        row("Frontend",    s.frontend),
+        row("Backend",     s.backend),
+        row("Databases",   s.databases),
         row("Infra / DevOps", s.infra),
-        row("Practices",  s.practices),
+        row("Practices",   s.practices),
       ];
     },
 
@@ -101,6 +102,7 @@ const CommandParser = (() => {
         { html: '<span class="accent">Contact</span>' },
         { blank: true },
         row("Email",    `<a href="mailto:${c.email}" class="link">${c.email}</a>`),
+        row("WhatsApp", `<a href="https://wa.me/${c.whatsapp}" target="_blank" class="link">+${c.whatsapp}</a>`),
         row("GitHub",   `<a href="https://${c.github}" target="_blank" class="link">${c.github}</a>`),
         row("Twitter",  c.twitter),
         row("LinkedIn", `<a href="https://${c.linkedin}" target="_blank" class="link">${c.linkedin}</a>`),

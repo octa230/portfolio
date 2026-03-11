@@ -21,8 +21,7 @@ const Terminal = (() => {
           { html: `<span class="big-name">${d.name}</span>` },
           { html: `<span class="accent">${d.role}</span>` },
           { blank: true },
-          "I help businesses build things on the internet —",
-          "from simple landing pages to full online stores and custom web & mobile Apps.",
+          d.summary,
           { blank: true },
           { html: `📍 ${d.location}` },
           { html: d.available
@@ -31,18 +30,27 @@ const Terminal = (() => {
         ],
       },
       {
-        // Show recent work in plain terms, not job titles
-        command: "recent-work",
+        command: "skill-set",
         content: (() => {
-          const lines = [];
-          d.experience.slice(0, 2).forEach(exp => {
-            lines.push({ html: `  <span class="job-title">${exp.company}</span>  <span class="period">${exp.period}</span>` });
-            // Show a plain-language one-liner derived from the summary
-            const brief = exp.summary.split(".")[0] + ".";
-            lines.push(`  ${brief}`);
-            lines.push({ blank: true });
-          });
-          return lines;
+          const s = d.skills;
+          const row = (label, arr) =>
+            ({ html: `  <span class="label">${label.padEnd(13)}</span>${arr.join("  ·  ")}` });
+          return [
+            ...(d.whatIDo ? [
+              { html: '<span class="accent">What I do</span>' },
+              { blank: true },
+              ...d.whatIDo.map(line => `  ${line}`),
+              { blank: true },
+            ] : []),
+            { html: '<span class="accent">Tech stack</span>' },
+            { blank: true },
+            row("Languages",   s.languages),
+            row("Mobile",      s.mobile),
+            row("Frontend",    s.frontend),
+            row("Backend",     s.backend),
+            row("Databases",   s.databases),
+            row("Infra",       s.infra),
+          ];
         })(),
       },
       {
@@ -97,6 +105,14 @@ const Terminal = (() => {
   // ── Layman UI wiring ──────────────────────────────────────────────────────
   function bindLaymanUI() {
 
+    // Populate banner from portfolioData so it never goes stale
+    const firstName = portfolioData.name.split(" ")[0];
+    const initials  = portfolioData.name.split(" ").map(w => w[0]).join("").slice(0, 2);
+    const headingEl = document.getElementById("welcome-heading");
+    const avatarEl  = document.getElementById("welcome-avatar");
+    if (headingEl) headingEl.textContent = `Hey, I'm ${firstName} 👋`;
+    if (avatarEl)  avatarEl.textContent  = initials;
+
     // Welcome banner dismiss
     const banner   = document.getElementById("welcome-banner");
     const dismissBtn = document.getElementById("welcome-dismiss");
@@ -127,7 +143,7 @@ const Terminal = (() => {
         );
         TypingEngine.insertBlank();
         TypingEngine.insertHTML(
-          "I help businesses build things on the internet — from simple landing pages to full online stores and custom apps.",
+          d.summary,
           "output-line"
         );
         TypingEngine.insertBlank();

@@ -75,6 +75,16 @@ const AIHandler = (() => {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
+        // Friendly message for quota/rate-limit errors
+        if (response.status === 429) {
+          await TypingEngine.printResponse([
+            { html: '<span class="warn">⚠  The AI assistant is temporarily unavailable.</span>' },
+            "The free quota is being set up or has been reached — this usually resolves within a few hours.",
+            { html: `In the meantime, feel free to browse using the buttons below or <a href="mailto:${portfolioData.contact.email}" class="link">email me directly</a>.` },
+          ]);
+          isStreaming = false;
+          return;
+        }
         printError(err.error || `Server error ${response.status}`);
         isStreaming = false;
         return;

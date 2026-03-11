@@ -1,0 +1,13 @@
+{
+  "name": "Mervyn Stunner · Engineer",
+  "short_name": "Marvin",
+  "description": "Full-Stack & Mobile Engineer based in Dubai",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    { "src": "/favicon.ico",        "sizes": "48x48",   "type": "image/x-icon" },
+    { "src": "/apple-touch-icon.png","sizes": "180x180", "type": "image/png"    }
+  ]
+}

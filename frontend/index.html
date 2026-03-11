@@ -3,17 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Software Developer -UAE · Portfolio</title>
-  <meta name="description" content="Senior Full-Stack Engineer — interactive terminal portfolio." />
 
+  <!-- ═══════════════════════════════════════════════════════
+       CORE SEO
+       Update: title, description, canonical, keywords
+       to match your real name, location and services.
+  ═══════════════════════════════════════════════════════ -->
+  <title>Mervyn Stunner · Full-Stack & Mobile Engineer | Dubai</title>
+  <meta name="description"
+    content="Mervyn Stunner is a full-stack and mobile engineer based in Dubai, UAE. I build web apps, mobile apps, e-commerce stores, IoT systems and data dashboards for businesses across the UAE and beyond." />
+  <meta name="keywords"
+    content="Mervyn Stunner, full stack developer Dubai, mobile app developer UAE, web developer Dubai, React developer, Node.js, e-commerce developer, IoT engineer, hire developer Dubai, software engineer UAE" />
+  <meta name="author" content="Mervyn Stunner" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://mervynstunner.com/" />
+
+  <!-- ═══════════════════════════════════════════════════════
+       OPEN GRAPH  (Facebook, LinkedIn, WhatsApp previews)
+  ═══════════════════════════════════════════════════════ -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://mervynstunner.com/" />
+  <meta property="og:title"       content="Mervyn Stunner · Full-Stack & Mobile Engineer" />
+  <meta property="og:description" content="I build web apps, mobile apps, e-commerce stores, IoT systems and data dashboards. Based in Dubai, working globally." />
+  <meta property="og:image"       content="https://mervynstunner.com/og-image.jpg" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale"      content="en_US" />
+  <meta property="og:site_name"   content="Mervyn Stunner" />
+
+  <!-- ═══════════════════════════════════════════════════════
+       TWITTER / X CARD
+  ═══════════════════════════════════════════════════════ -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:url"         content="https://mervynstunner.com/" />
+  <meta name="twitter:title"       content="Mervyn Stunner · Full-Stack & Mobile Engineer" />
+  <meta name="twitter:description" content="I build web apps, mobile apps, e-commerce stores, IoT systems and data dashboards. Based in Dubai, working globally." />
+  <meta name="twitter:image"       content="https://mervynstunner.com/og-image.jpg" />
+  <meta name="twitter:creator"     content="@mervynstunner" />
+
+  <!-- ═══════════════════════════════════════════════════════
+       JSON-LD STRUCTURED DATA
+       Tells Google exactly who you are and what you do.
+       Appears as rich results in search.
+  ═══════════════════════════════════════════════════════ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Mervyn Stunner",
+    "url": "https://mervynstunner.com",
+    "image": "https://mervynstunner.com/og-image.jpg",
+    "jobTitle": "Full-Stack & Mobile Engineer",
+    "description": "Full-stack and mobile engineer building web apps, mobile apps, e-commerce stores, IoT systems and data dashboards.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Dubai",
+      "addressCountry": "AE"
+    },
+    "sameAs": [
+      "https://linkedin.com/in/marvin-maloba-09b594232",
+      "https://github.com/octa230"
+    ],
+    "knowsAbout": [
+      "Web Development", "Mobile App Development", "React", "Node.js",
+      "E-commerce", "IoT", "Data Dashboards", "TypeScript", "Python"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "name": "Software Engineering Services",
+      "description": "Custom web apps, mobile apps, e-commerce stores, IoT systems, data pipelines and dashboards."
+    }
+  }
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PERFORMANCE
+       Preconnect to font origin, preload critical CSS.
+  ═══════════════════════════════════════════════════════ -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="css/terminal.css" as="style" />
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap"
     rel="stylesheet"
   />
-
   <link rel="stylesheet" href="css/terminal.css" />
+
+  <!-- Favicon — replace with your real icons -->
+  <link rel="icon"             href="/favicon.ico" sizes="any" />
+  <link rel="icon"             href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest"         href="/site.webmanifest" />
+  <meta name="theme-color"     content="#0d0d0d" />
 </head>
 <body>
 
@@ -22,10 +103,10 @@
     <!-- ── Welcome banner ─────────────────────────────────────────── -->
     <div id="welcome-banner" role="complementary" aria-label="Site intro for new visitors">
       <div id="welcome-inner">
-        <div id="welcome-avatar" aria-hidden="true">MM</div>
+        <div id="welcome-avatar" aria-hidden="true">MS</div>
         <div id="welcome-text">
-          <p id="welcome-heading">Hey, I'm Marvin 👋</p>
-          <p id="welcome-sub">I build websites, web shops &amp; Mobile + Web apps.<br>This page is interactive — <strong>you can ask me anything below.</strong></p>
+          <p id="welcome-heading">Hey, I'm Mervyn 👋</p>
+          <p id="welcome-sub">I build websites, web shops &amp; apps.<br>This page is interactive — <strong>you can ask me anything below.</strong></p>
         </div>
         <button id="welcome-dismiss" aria-label="Dismiss intro tip">Got it ✕</button>
       </div>
@@ -38,7 +119,7 @@
         <span class="tb-dot red"></span>
         <span class="tb-dot amber"></span>
         <span class="tb-dot green"></span>
-        <span id="titlebar-text">marv@portfolio: ~</span>
+        <span id="titlebar-text">mervyn@portfolio: ~</span>
         <!-- Skip intro for impatient visitors -->
         <button id="skip-intro-btn" aria-label="Skip the typing animation">Skip intro ↓</button>
       </div>
@@ -107,8 +188,11 @@
 
       <!-- ── Primary CTA ────────────────────────────────────────────── -->
       <section class="panel-section" id="panel-cta">
-        <a id="cta-email" href="/cdn-cgi/l/email-protection#31505d544971505d54494358475443501f555447" class="cta-button">
+        <a id="cta-email" href="/cdn-cgi/l/email-protection#3159545d5d5e715c544347485f4245445f5f54431f525e5c" class="cta-button">
           ✉️ &nbsp;Email me — let's talk
+        </a>
+        <a id="cta-whatsapp" href="https://wa.me/971545574228?text=Hi%20Mervyn%2C%20I%20found%20your%20portfolio%20and%20I%27d%20like%20to%20discuss%20a%20project." target="_blank" rel="noopener" class="cta-button cta-whatsapp">
+          💬 &nbsp;WhatsApp me
         </a>
         <p class="cta-sub">Usually replies within a few hours</p>
       </section>
@@ -117,8 +201,51 @@
 
   </div><!-- /#page-shell -->
 
+  <!--
+    ═══════════════════════════════════════════════════════════════
+    SEO CONTENT BLOCK
+    Visually hidden but fully readable by search crawlers.
+    Ensures Google indexes your key content even if it doesn't
+    execute the terminal JS. Do NOT use display:none (blocks crawl).
+    ═══════════════════════════════════════════════════════════════
+  -->
+  <div id="seo-content" aria-hidden="true">
+    <h1>Mervyn Stunner — Full-Stack &amp; Mobile Engineer, Nairobi</h1>
+    <p>
+      I'm Mervyn Stunner, a full-stack and mobile software engineer based in Dubai, UAE,
+      with over 9 years of experience building production systems for startups and businesses.
+      I work with clients locally in the UAE and globally, delivering real custom software —
+      not templates.
+    </p>
+
+    <h2>What I build</h2>
+    <ul>
+      <li>Web applications and platforms</li>
+      <li>Mobile apps for iOS and Android</li>
+      <li>E-commerce stores and online shops</li>
+      <li>IoT and networking systems</li>
+      <li>Data pipelines, dashboards and analytics</li>
+      <li>System architecture and engineering</li>
+      <li>Performance optimisation for legacy systems</li>
+      <li>Taking products from idea to market</li>
+    </ul>
+
+    <h2>Technologies</h2>
+    <p>
+      TypeScript, JavaScript, Python, Go, React, Next.js, Node.js, React Native,
+      PostgreSQL, MongoDB, Redis, AWS, Docker, Kubernetes, IoT protocols.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Available for new projects. Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6c010d1e1a05022c01091e1a15021f18190202091e4208091a">[email&#160;protected]</a>.
+      LinkedIn: linkedin.com/in/marvin-maloba-09b594232.
+      Based in Dubai, UAE. Open to remote work worldwide.
+    </p>
+  </div>
+
   <!-- Scripts — order matters -->
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="js/portfolio-data.js"></script>
   <script src="js/typing-engine.js"></script>
   <script src="js/command-parser.js"></script>
