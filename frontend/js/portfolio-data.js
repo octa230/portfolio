@@ -18,7 +18,7 @@ const portfolioData = {
   summary:
     "I specialize in enterprise grade systems, API solutions and many more. " + 
     "From Custom accounting & business Software, Mobile & Web Apps, to payment aggregators, " + 
-    "From Planning to distribution. Maintanance, Database management & migrations.. " +
+    "From Planning to distribution. Software Maintanance, Database management & migrations.. " +
     "I care about clean architecture, developer experience, and the people who use products I build. " +
     "I work with clients who want real systems — not off-the-shelf templates.",
 
