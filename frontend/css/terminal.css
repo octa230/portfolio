@@ -291,6 +291,22 @@ button, a { cursor: pointer; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── SEO content block — visible to crawlers, invisible to users ────────── */
+#seo-content {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  left: -9999px !important;
+  top: -9999px !important;
+}
+
 /* ── Print / no-animation preference ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   #cursor { animation: none; opacity: 1; }
@@ -550,6 +566,9 @@ button, a { cursor: pointer; }
 #panel-cta {
   flex-shrink: 0;
   align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .cta-button {
@@ -575,6 +594,16 @@ button, a { cursor: pointer; }
 
 .cta-button:active {
   transform: scale(0.97);
+}
+
+.cta-button.cta-whatsapp {
+  background: #25d366;
+  color: #fff;
+}
+
+.cta-button.cta-whatsapp:hover {
+  background: #1ebe5d;
+  opacity: 1;
 }
 
 .cta-sub {
