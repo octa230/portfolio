@@ -17,7 +17,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -27,18 +27,18 @@ const __dirname  = path.dirname(__filename);
 // ── Load environment variables ────────────────────────────────────────────────
 dotenv.config();
 
-const PORT        = parseInt(process.env.PORT || "3000", 10);
-const NODE_ENV    = process.env.NODE_ENV || "development";
-const OPENAI_KEY  = process.env.OPENAI_API_KEY;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*"; // lock this in prod
+const PORT           = parseInt(process.env.PORT || "3000", 10);
+const NODE_ENV       = process.env.NODE_ENV || "development";
+const GEMINI_KEY     = process.env.GEMINI_API_KEY;
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
-if (!OPENAI_KEY) {
-  console.error("❌  OPENAI_API_KEY is not set. Check your .env file.");
+if (!GEMINI_KEY) {
+  console.error("❌  GEMINI_API_KEY is not set. Check your .env file.");
   process.exit(1);
 }
 
-// ── OpenAI client ─────────────────────────────────────────────────────────────
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
+// ── Gemini client ─────────────────────────────────────────────────────────────
+const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
 
 // ── Express app ───────────────────────────────────────────────────────────────
 const app = express();
@@ -146,63 +146,47 @@ ${JSON.stringify(portfolioData, null, 2)}
 app.post("/ask", rateLimiter, validateAskBody, async (req, res) => {
   const { question, portfolioData, history = [] } = req.body;
 
-  // Build message history (last N turns from client)
-  const safeHistory = Array.isArray(history)
-    ? history
-        .slice(-10)  // accept at most 10 historical messages
-        .filter(m => m.role && typeof m.content === "string")
-        .map(m => ({ role: m.role, content: m.content.slice(0, 1000) }))  // cap each
-    : [];
-
-  const messages = [
-    ...safeHistory,
-    { role: "user", content: question },
-  ];
-
   try {
-    // ── Streaming response ──────────────────────────────────────────────
-    const stream = await openai.chat.completions.create({
-      model:       process.env.OPENAI_MODEL || "gpt-4o-mini",
-      max_tokens:  300,
-      temperature: 0.4,   // low = more factual, less creative
-      stream:      true,
-      system:      buildSystemPrompt(portfolioData),
-      messages,
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+    // Format content for the latest SDK
+    const contents = [
+      ...history.slice(-10).map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+      { role: "user", parts: [{ text: question }] },
+    ];
+
+    // Use the model directly from the client
+    const response = await ai.models.generateContentStream({
+      model: modelName,
+      contents,
+      config: {
+        systemInstruction: buildSystemPrompt(portfolioData),
+        maxOutputTokens: 300,
+        temperature: 0.4,
+      },
     });
 
-    // Set SSE headers
-    res.setHeader("Content-Type",  "text/event-stream");
+    res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection",    "keep-alive");
-    res.flushHeaders();
+    res.setHeader("Connection", "keep-alive");
 
-    for await (const chunk of stream) {
-      const token = chunk.choices[0]?.delta?.content || "";
-      if (token) {
-        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    // Correct streaming iteration for the latest @google/genai SDK
+    for await (const chunk of response) {
+      if (chunk.text) {
+        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk.text } }] })}\n\n`);
       }
     }
 
     res.write("data: [DONE]\n\n");
     res.end();
-
   } catch (err) {
-    console.error("[/ask] OpenAI error:", err.message);
-
-    // If headers already sent (streaming started), just close
-    if (res.headersSent) {
-      res.end();
-      return;
+    console.error("[/ask] Gemini error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to connect to the AI model." });
     }
-
-    if (err.status === 401) {
-      return res.status(500).json({ error: "OpenAI authentication failed. Check your API key." });
-    }
-    if (err.status === 429) {
-      return res.status(429).json({ error: "OpenAI rate limit hit. Try again in a moment." });
-    }
-
-    res.status(500).json({ error: "An error occurred processing your request." });
   }
 });
 
