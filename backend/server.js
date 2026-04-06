@@ -28,8 +28,8 @@ const genAI = new GoogleGenAI({apiKey: GEMINI_KEY});
 const app = express();
 
 // Serve static files first — before any middleware
-app.use(express.static(path.join(__dirname, "../frontend")));
-app.use(express.static(path.join(__dirname, "../frontend/public")));
+app.use(express.static(path.join(__dirname, "../frontend"), {index: false}));
+app.use(express.static(path.join(__dirname, "../frontend/public"), {index: false}));
 
 app.use(express.json({ limit: "32kb" }));
 app.use(cors({
