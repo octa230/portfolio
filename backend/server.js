@@ -1,19 +1,3 @@
-/**
- * server.js
- * ──────────
- * Express backend for the terminal portfolio.
- *
- * Endpoints:
- *   POST /ask   – proxy AI questions to OpenAI with a structured system prompt
- *   GET  /health – liveness check
- *
- * Security:
- *   • API key never leaves the server
- *   • Request body validated before touching OpenAI
- *   • Simple in-memory rate limiter (no Redis required for self-hosting)
- *   • CORS locked to same origin in production
- */
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -38,32 +22,40 @@ if (!GEMINI_KEY) {
 }
 
 // ── Gemini client ─────────────────────────────────────────────────────────────
-const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
+const genAI = new GoogleGenAI({apiKey: GEMINI_KEY});
 
 // ── Express app ───────────────────────────────────────────────────────────────
 const app = express();
 
-// Serve the frontend from the `../frontend` directory
+// Serve static files first — before any middleware
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.use(express.static(path.join(__dirname, "../frontend/public")));
 
-app.use(express.json({ limit: "32kb" }));  // keep payloads small
-
-// ── CORS ──────────────────────────────────────────────────────────────────────
+app.use(express.json({ limit: "32kb" }));
 app.use(cors({
   origin: NODE_ENV === "production" ? ALLOWED_ORIGIN : "*",
   methods: ["GET", "POST"],
 }));
 
+// ── Bot detection (Dynamic Rendering / SEO) ───────────────────────────────────
+const BOT_UA = /googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|whatsapp|applebot|pinterestbot|embedly|quora link preview|outbrain|vkShare|W3C_Validator/i;
+const HUMAN_UA = /mozilla|chrome|safari|firefox|opera|edge/i;
+
+const seoMiddleware = (req, res, next) => {
+  const ua = req.headers['user-agent'] || '';
+  if (BOT_UA.test(ua) || !HUMAN_UA.test(ua)) {
+    return res.sendFile(path.join(__dirname, "../frontend/index-seo.html"));
+  }
+  next();
+};
+
 // ── Simple in-memory rate limiter ─────────────────────────────────────────────
-// Maps IP → { count, resetAt }
-// Allows up to MAX_REQUESTS per WINDOW_MS per IP.
-const RATE_WINDOW_MS  = 60_000;  // 1 minute
-const MAX_REQUESTS    = 20;
-const rateLimitStore  = new Map();
+const RATE_WINDOW_MS = 60_000;
+const MAX_REQUESTS   = 20;
+const rateLimitStore = new Map();
 
 function rateLimiter(req, res, next) {
-  const ip  = req.ip || req.connection.remoteAddress || "unknown";
+  const ip  = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "unknown";
   const now = Date.now();
 
   let entry = rateLimitStore.get(ip);
@@ -74,17 +66,13 @@ function rateLimiter(req, res, next) {
   }
 
   entry.count += 1;
-
   res.setHeader("X-RateLimit-Limit",     MAX_REQUESTS);
   res.setHeader("X-RateLimit-Remaining", Math.max(0, MAX_REQUESTS - entry.count));
 
   if (entry.count > MAX_REQUESTS) {
-    return res.status(429).json({
-      error: "Too many requests. Please wait a minute before asking again.",
-    });
+    return res.status(429).json({ error: "Too many requests. Please wait a minute before asking again." });
   }
 
-  // Clean up old entries every 100 requests (prevents unbounded growth)
   if (rateLimitStore.size > 1000) {
     for (const [key, val] of rateLimitStore) {
       if (now > val.resetAt) rateLimitStore.delete(key);
@@ -94,33 +82,7 @@ function rateLimiter(req, res, next) {
   next();
 }
 
-// ── Input validation ──────────────────────────────────────────────────────────
-function validateAskBody(req, res, next) {
-  const { question, portfolioData } = req.body;
-
-  if (!question || typeof question !== "string") {
-    return res.status(400).json({ error: "Missing or invalid `question` field." });
-  }
-
-  if (question.length > 500) {
-    return res.status(400).json({ error: "Question is too long (max 500 chars)." });
-  }
-
-  if (!portfolioData || typeof portfolioData !== "object") {
-    return res.status(400).json({ error: "Missing or invalid `portfolioData` field." });
-  }
-
-  next();
-}
-
 // ── System prompt builder ─────────────────────────────────────────────────────
-/**
- * Constructs a tight system prompt that:
- *  1. Gives the AI a persona
- *  2. Supplies all portfolio data as ground truth
- *  3. Prevents hallucination and off-topic answers
- *  4. Keeps answers short and professional
- */
 function buildSystemPrompt(portfolioData) {
   const p = portfolioData;
 
@@ -143,6 +105,25 @@ ${JSON.stringify(portfolioData, null, 2)}
 === END DATA ===`;
 }
 
+// ── Input validation ──────────────────────────────────────────────────────────
+function validateAskBody(req, res, next) {
+  const { question, portfolioData } = req.body;
+
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "Missing or invalid `question` field." });
+  }
+
+  if (question.length > 500) {
+    return res.status(400).json({ error: "Question is too long (max 500 chars)." });
+  }
+
+  if (!portfolioData || typeof portfolioData !== "object") {
+    return res.status(400).json({ error: "Missing or invalid `portfolioData` field." });
+  }
+
+  next();
+}
+
 // ── POST /ask ─────────────────────────────────────────────────────────────────
 app.post("/ask", rateLimiter, validateAskBody, async (req, res) => {
   const { question, portfolioData, history = [] } = req.body;
@@ -160,7 +141,7 @@ app.post("/ask", rateLimiter, validateAskBody, async (req, res) => {
     ];
 
     // Use the model directly from the client
-    const response = await ai.models.generateContentStream({
+    const response = await genAI.models.generateContentStream({
       model: modelName,
       contents,
       config: {
@@ -196,8 +177,8 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", env: NODE_ENV, ts: new Date().toISOString() });
 });
 
-// ── Catch-all: serve index.html for SPA routing ───────────────────────────────
-app.get(/.*/, (_req, res) => {
+// ── SEO & SPA Catch-All ───────────────────────────────────────────────────────
+app.get(/.*/, seoMiddleware, (_req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
@@ -213,7 +194,8 @@ app.listen(PORT, () => {
   console.log(`  ║  Terminal Portfolio Backend           ║`);
   console.log(`  ║  http://localhost:${PORT}                ║`);
   console.log(`  ║  ENV: ${NODE_ENV.padEnd(28)}  ║`);
+  console.log(`  ║  SEO: Dynamic Rendering Enabled       ║`);
   console.log(`  ╚══════════════════════════════════════╝\n`);
 });
 
-export default app; // for testing
+export default app;
