@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mervynstunner.com/sitemap.xml
