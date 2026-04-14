@@ -185,6 +185,4 @@ const portfolioData = {
 };
 
 // Export for ES-module environments (frontend) and CommonJS (backend).
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = portfolioData;
-}
+export default portfolioData

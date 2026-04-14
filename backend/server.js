@@ -6,14 +6,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 // ── Load environment variables ────────────────────────────────────────────────
 dotenv.config();
 
-const PORT           = parseInt(process.env.PORT || "3000", 10);
-const NODE_ENV       = process.env.NODE_ENV || "development";
-const GEMINI_KEY     = process.env.GEMINI_API_KEY;
+const PORT = parseInt(process.env.PORT || "3000", 10);
+const NODE_ENV = process.env.NODE_ENV || "development";
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
 if (!GEMINI_KEY) {
@@ -22,14 +22,14 @@ if (!GEMINI_KEY) {
 }
 
 // ── Gemini client ─────────────────────────────────────────────────────────────
-const genAI = new GoogleGenAI({apiKey: GEMINI_KEY});
+const genAI = new GoogleGenAI({ apiKey: GEMINI_KEY });
 
 // ── Express app ───────────────────────────────────────────────────────────────
 const app = express();
 
 // Serve static files first — before any middleware
-app.use(express.static(path.join(__dirname, "../frontend"), {index: false}));
-app.use(express.static(path.join(__dirname, "../frontend/public"), {index: false}));
+app.use(express.static(path.join(__dirname, "../frontend"), { index: false }));
+app.use(express.static(path.join(__dirname, "../frontend/public"), { index: false }));
 
 app.use(express.json({ limit: "32kb" }));
 app.use(cors({
@@ -51,11 +51,11 @@ const seoMiddleware = (req, res, next) => {
 
 // ── Simple in-memory rate limiter ─────────────────────────────────────────────
 const RATE_WINDOW_MS = 60_000;
-const MAX_REQUESTS   = 20;
+const MAX_REQUESTS = 20;
 const rateLimitStore = new Map();
 
 function rateLimiter(req, res, next) {
-  const ip  = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "unknown";
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "unknown";
   const now = Date.now();
 
   let entry = rateLimitStore.get(ip);
@@ -66,7 +66,7 @@ function rateLimiter(req, res, next) {
   }
 
   entry.count += 1;
-  res.setHeader("X-RateLimit-Limit",     MAX_REQUESTS);
+  res.setHeader("X-RateLimit-Limit", MAX_REQUESTS);
   res.setHeader("X-RateLimit-Remaining", Math.max(0, MAX_REQUESTS - entry.count));
 
   if (entry.count > MAX_REQUESTS) {
@@ -157,8 +157,12 @@ app.post("/ask", rateLimiter, validateAskBody, async (req, res) => {
 
     // Correct streaming iteration for the latest @google/genai SDK
     for await (const chunk of response) {
-      if (chunk.text) {
-        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk.text } }] })}\n\n`);
+      //if (chunk.text) {
+      //  res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk.text } }] })}\n\n`);
+      //}
+      const token = chunk.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      if (token) {
+        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: token } }] })}\n\n`);
       }
     }
 
